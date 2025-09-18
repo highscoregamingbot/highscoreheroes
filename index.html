@@ -127,5 +127,32 @@
       document.body.appendChild(script);
 
     </script>
+    <script>
+    // Debug script - URL parameter parsing
+    window.addEventListener('load', function() {
+        console.log('=== DEBUG: URL Parameter Test ===');
+        console.log('Full URL:', window.location.href);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const tgParam = urlParams.get('tgWebAppStartParam');
+        console.log('tgWebAppStartParam:', tgParam);
+        
+        if (tgParam) {
+            try {
+                const padding = '=='.substring(0, (4 - tgParam.length % 4) % 4);
+                const decoded = atob(tgParam + padding);
+                const data = JSON.parse(decoded);
+                console.log('Decoded match data:', data);
+                
+                // Store globally voor Unity
+                window.telegramData = data;
+            } catch (e) {
+                console.error('URL decode error:', e);
+            }
+        } else {
+            console.log('No tgWebAppStartParam found');
+        }
+    });
+    </script>
   </body>
 </html>
