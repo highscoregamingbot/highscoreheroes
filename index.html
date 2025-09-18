@@ -128,39 +128,39 @@
 
     </script>
     <script>
-    // Debug script - Telegram WebApp parameter parsing
+    // Fixed debug voor Telegram WebApp
     window.addEventListener('load', function() {
-        console.log('=== TELEGRAM WEBAPP DEBUG ===');
-        console.log('Full URL:', window.location.href);
+        var debugDiv = document.createElement('div');
+        debugDiv.style = 'position: fixed; top: 10px; left: 10px; background: black; color: white; padding: 10px; z-index: 9999; font-size: 12px; max-width: 300px;';
+        document.body.appendChild(debugDiv);
         
-        // Check for new startapp parameter (not tgWebAppStartParam)
+        var debugInfo = [];
+        
         const urlParams = new URLSearchParams(window.location.search);
-        const startapp = urlParams.get('startapp');
-        console.log('startapp parameter:', startapp);
+        const tgWebAppParam = urlParams.get('tgWebAppStartParam'); // Juiste parameter naam
+        debugInfo.push('tgWebAppStartParam: ' + (tgWebAppParam ? 'FOUND' : 'NOT FOUND'));
         
-        if (startapp) {
+        if (tgWebAppParam) {
             try {
-                const padding = '=='.substring(0, (4 - startapp.length % 4) % 4);
-                const decoded = atob(startapp + padding);
+                const padding = '=='.substring(0, (4 - tgWebAppParam.length % 4) % 4);
+                const decoded = atob(tgWebAppParam + padding);
                 const data = JSON.parse(decoded);
-                console.log('Decoded WebApp data:', data);
-                
-                // Store globally for Unity
-                window.telegramMatchData = data;
+                debugInfo.push('Match ID: ' + data.matchId);
+                debugInfo.push('Chat ID: ' + data.chatId);
             } catch (e) {
-                console.error('WebApp decode error:', e);
+                debugInfo.push('Decode ERROR: ' + e.message);
             }
-        } else {
-            console.log('No startapp parameter found');
         }
         
-        // Check Telegram WebApp object for user data
-        if (window.Telegram && window.Telegram.WebApp) {
-            console.log('Telegram WebApp object found');
-            console.log('User data:', window.Telegram.WebApp.initDataUnsafe?.user);
-        } else {
-            console.log('Telegram WebApp object not found');
+        // Check for user data in hash
+        const hashData = window.location.hash;
+        if (hashData.includes('tgWebAppData')) {
+            debugInfo.push('User data: FOUND in hash');
         }
+        
+        debugDiv.innerHTML = debugInfo.join('<br>');
+        
+        setTimeout(function() { debugDiv.remove(); }, 10000);
     });
     </script>
   </body>
