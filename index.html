@@ -128,29 +128,38 @@
 
     </script>
     <script>
-    // Debug script - URL parameter parsing
+    // Debug script - Telegram WebApp parameter parsing
     window.addEventListener('load', function() {
-        console.log('=== DEBUG: URL Parameter Test ===');
+        console.log('=== TELEGRAM WEBAPP DEBUG ===');
         console.log('Full URL:', window.location.href);
         
+        // Check for new startapp parameter (not tgWebAppStartParam)
         const urlParams = new URLSearchParams(window.location.search);
-        const tgParam = urlParams.get('tgWebAppStartParam');
-        console.log('tgWebAppStartParam:', tgParam);
+        const startapp = urlParams.get('startapp');
+        console.log('startapp parameter:', startapp);
         
-        if (tgParam) {
+        if (startapp) {
             try {
-                const padding = '=='.substring(0, (4 - tgParam.length % 4) % 4);
-                const decoded = atob(tgParam + padding);
+                const padding = '=='.substring(0, (4 - startapp.length % 4) % 4);
+                const decoded = atob(startapp + padding);
                 const data = JSON.parse(decoded);
-                console.log('Decoded match data:', data);
+                console.log('Decoded WebApp data:', data);
                 
-                // Store globally voor Unity
-                window.telegramData = data;
+                // Store globally for Unity
+                window.telegramMatchData = data;
             } catch (e) {
-                console.error('URL decode error:', e);
+                console.error('WebApp decode error:', e);
             }
         } else {
-            console.log('No tgWebAppStartParam found');
+            console.log('No startapp parameter found');
+        }
+        
+        // Check Telegram WebApp object for user data
+        if (window.Telegram && window.Telegram.WebApp) {
+            console.log('Telegram WebApp object found');
+            console.log('User data:', window.Telegram.WebApp.initDataUnsafe?.user);
+        } else {
+            console.log('Telegram WebApp object not found');
         }
     });
     </script>
