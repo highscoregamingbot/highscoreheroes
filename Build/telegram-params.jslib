@@ -1,43 +1,27 @@
-// telegram-params.jslib
-// Plaats dit bestand in: Assets/Plugins/WebGL/telegram-params.jslib
+// telegram-webapp.jslib
+// Plaats dit bestand in: Assets/Plugins/WebGL/telegram-webapp.jslib
 
-var TelegramParams = {
+var TelegramWebApp = {
     
     GetTelegramParam: function(paramNamePtr) {
-        // Convert C# string pointer naar JavaScript string
         var paramName = UTF8ToString(paramNamePtr);
         
         try {
-            // Methode 1: Probeer direct uit URL parameters
-            var urlParams = new URLSearchParams(window.location.search);
-            var directParam = urlParams.get(paramName);
-            if (directParam) {
-                // Alloceer geheugen voor return string
-                var bufferSize = lengthBytesUTF8(directParam) + 1;
-                var buffer = _malloc(bufferSize);
-                stringToUTF8(directParam, buffer, bufferSize);
-                return buffer;
-            }
-            
-            // Methode 2: Parse Telegram WebApp startapp parameter
-            var tgWebAppStartParam = urlParams.get('tgWebAppStartParam');
-            if (!tgWebAppStartParam) {
-                // Ook checken voor andere mogelijke parameter namen
-                tgWebAppStartParam = urlParams.get('startapp');
-            }
-            
-            if (tgWebAppStartParam) {
-                // Base64 decode
+            // Method 1: Check Telegram WebApp startParam
+            if (typeof window.Telegram !== 'undefined' && 
+                window.Telegram.WebApp && 
+                window.Telegram.WebApp.initDataUnsafe &&
+                window.Telegram.WebApp.initDataUnsafe.start_param) {
+                
+                var startParam = window.Telegram.WebApp.initDataUnsafe.start_param;
+                console.log('Telegram start_param:', startParam);
+                
                 try {
-                    // Voeg padding toe indien nodig
-                    var padding = '=='.substring(0, (4 - tgWebAppStartParam.length % 4) % 4);
-                    var decoded = atob(tgWebAppStartParam + padding);
-                    
-                    // Parse JSON
+                    var padding = '=='.substring(0, (4 - startParam.length % 4) % 4);
+                    var decoded = atob(startParam + padding);
                     var data = JSON.parse(decoded);
-                    console.log('Parsed Telegram data:', data);
+                    console.log('Parsed start param data:', data);
                     
-                    // Haal gevraagde parameter op
                     var value = data[paramName];
                     if (value !== undefined && value !== null) {
                         var result = String(value);
@@ -46,41 +30,117 @@ var TelegramParams = {
                         stringToUTF8(result, buffer, bufferSize);
                         return buffer;
                     }
-                } catch (parseError) {
-                    console.error('Error parsing Telegram startapp parameter:', parseError);
+                } catch (e) {
+                    console.error('Error parsing start_param:', e);
                 }
             }
             
-            // Methode 3: Check Telegram WebApp object (als beschikbaar)
-            if (typeof window.Telegram !== 'undefined' && 
-                window.Telegram.WebApp && 
-                window.Telegram.WebApp.initDataUnsafe) {
-                var initData = window.Telegram.WebApp.initDataUnsafe;
-                if (initData.start_param) {
-                    try {
-                        var decoded = atob(initData.start_param);
-                        var data = JSON.parse(decoded);
-                        var value = data[paramName];
-                        if (value !== undefined && value !== null) {
-                            var result = String(value);
-                            var bufferSize = lengthBytesUTF8(result) + 1;
-                            var buffer = _malloc(bufferSize);
-                            stringToUTF8(result, buffer, bufferSize);
-                            return buffer;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing Telegram WebApp start_param:', e);
+            // Method 2: Fallback to URL parameters
+            var urlParams = new URLSearchParams(window.location.search);
+            var tgParam = urlParams.get('tgWebAppStartParam');
+            if (tgParam) {
+                try {
+                    var padding = '=='.substring(0, (4 - tgParam.length % 4) % 4);
+                    var decoded = atob(tgParam + padding);
+                    var data = JSON.parse(decoded);
+                    
+                    var value = data[paramName];
+                    if (value !== undefined && value !== null) {
+                        var result = String(value);
+                        var bufferSize = lengthBytesUTF8(result) + 1;
+                        var buffer = _malloc(bufferSize);
+                        stringToUTF8(result, buffer, bufferSize);
+                        return buffer;
                     }
+                } catch (e) {
+                    console.error('Error parsing URL param:', e);
                 }
             }
-            
-            console.log('Parameter ' + paramName + ' not found');
             
         } catch (error) {
             console.error('Error in GetTelegramParam:', error);
         }
         
-        // Return lege string als niks gevonden
+        // Return empty string
+        var emptyString = "";
+        var bufferSize = lengthBytesUTF8(emptyString) + 1;
+        var buffer = _malloc(bufferSize);
+        stringToUTF8(emptyString, buffer, bufferSize);
+        return buffer;
+    },
+    
+    GetMyTelegramId: function() {
+        try {
+            if (typeof window.Telegram !== 'undefined' && 
+                window.Telegram.WebApp && 
+                window.Telegram.WebApp.initDataUnsafe &&
+                window.Telegram.WebApp.initDataUnsafe.user) {
+                
+                var userId = String(window.Telegram.WebApp.initDataUnsafe.user.id);
+                console.log('My Telegram ID:', userId);
+                
+                var bufferSize = lengthBytesUTF8(userId) + 1;
+                var buffer = _malloc(bufferSize);
+                stringToUTF8(userId, buffer, bufferSize);
+                return buffer;
+            }
+        } catch (error) {
+            console.error('Error getting Telegram ID:', error);
+        }
+        
+        // Return empty string
+        var emptyString = "";
+        var bufferSize = lengthBytesUTF8(emptyString) + 1;
+        var buffer = _malloc(bufferSize);
+        stringToUTF8(emptyString, buffer, bufferSize);
+        return buffer;
+    },
+    
+    GetMyTelegramUsername: function() {
+        try {
+            if (typeof window.Telegram !== 'undefined' && 
+                window.Telegram.WebApp && 
+                window.Telegram.WebApp.initDataUnsafe &&
+                window.Telegram.WebApp.initDataUnsafe.user) {
+                
+                var username = window.Telegram.WebApp.initDataUnsafe.user.username || "";
+                console.log('My Telegram username:', username);
+                
+                var bufferSize = lengthBytesUTF8(username) + 1;
+                var buffer = _malloc(bufferSize);
+                stringToUTF8(username, buffer, bufferSize);
+                return buffer;
+            }
+        } catch (error) {
+            console.error('Error getting Telegram username:', error);
+        }
+        
+        var emptyString = "";
+        var bufferSize = lengthBytesUTF8(emptyString) + 1;
+        var buffer = _malloc(bufferSize);
+        stringToUTF8(emptyString, buffer, bufferSize);
+        return buffer;
+    },
+    
+    GetMyTelegramFirstName: function() {
+        try {
+            if (typeof window.Telegram !== 'undefined' && 
+                window.Telegram.WebApp && 
+                window.Telegram.WebApp.initDataUnsafe &&
+                window.Telegram.WebApp.initDataUnsafe.user) {
+                
+                var firstName = window.Telegram.WebApp.initDataUnsafe.user.first_name || "";
+                console.log('My Telegram first name:', firstName);
+                
+                var bufferSize = lengthBytesUTF8(firstName) + 1;
+                var buffer = _malloc(bufferSize);
+                stringToUTF8(firstName, buffer, bufferSize);
+                return buffer;
+            }
+        } catch (error) {
+            console.error('Error getting Telegram first name:', error);
+        }
+        
         var emptyString = "";
         var bufferSize = lengthBytesUTF8(emptyString) + 1;
         var buffer = _malloc(bufferSize);
@@ -89,5 +149,4 @@ var TelegramParams = {
     }
 };
 
-// Registreer de functies
-mergeInto(LibraryManager.library, TelegramParams);
+mergeInto(LibraryManager.library, TelegramWebApp);
