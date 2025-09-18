@@ -128,46 +128,39 @@
 
     </script>
     <script>
-    // Visual debug voor Telegram WebApp
+    // Fixed debug voor Telegram WebApp
     window.addEventListener('load', function() {
-        // Maak debug div
         var debugDiv = document.createElement('div');
         debugDiv.style = 'position: fixed; top: 10px; left: 10px; background: black; color: white; padding: 10px; z-index: 9999; font-size: 12px; max-width: 300px;';
         document.body.appendChild(debugDiv);
         
         var debugInfo = [];
-        debugInfo.push('URL: ' + window.location.href);
         
         const urlParams = new URLSearchParams(window.location.search);
-        const startapp = urlParams.get('startapp');
-        debugInfo.push('startapp: ' + (startapp ? 'FOUND' : 'NOT FOUND'));
+        const tgWebAppParam = urlParams.get('tgWebAppStartParam'); // Juiste parameter naam
+        debugInfo.push('tgWebAppStartParam: ' + (tgWebAppParam ? 'FOUND' : 'NOT FOUND'));
         
-        if (startapp) {
+        if (tgWebAppParam) {
             try {
-                const padding = '=='.substring(0, (4 - startapp.length % 4) % 4);
-                const decoded = atob(startapp + padding);
+                const padding = '=='.substring(0, (4 - tgWebAppParam.length % 4) % 4);
+                const decoded = atob(tgWebAppParam + padding);
                 const data = JSON.parse(decoded);
-                debugInfo.push('Decoded OK: ' + JSON.stringify(data));
+                debugInfo.push('Match ID: ' + data.matchId);
+                debugInfo.push('Chat ID: ' + data.chatId);
             } catch (e) {
                 debugInfo.push('Decode ERROR: ' + e.message);
             }
         }
         
-        if (window.Telegram && window.Telegram.WebApp) {
-            debugInfo.push('Telegram WebApp: FOUND');
-            if (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                debugInfo.push('User ID: ' + window.Telegram.WebApp.initDataUnsafe.user.id);
-            }
-        } else {
-            debugInfo.push('Telegram WebApp: NOT FOUND');
+        // Check for user data in hash
+        const hashData = window.location.hash;
+        if (hashData.includes('tgWebAppData')) {
+            debugInfo.push('User data: FOUND in hash');
         }
         
         debugDiv.innerHTML = debugInfo.join('<br>');
         
-        // Verwijder na 10 seconden
-        setTimeout(function() {
-            debugDiv.remove();
-        }, 10000);
+        setTimeout(function() { debugDiv.remove(); }, 10000);
     });
     </script>
   </body>
