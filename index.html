@@ -214,13 +214,31 @@
     window.GetMyTelegramUsername = GetMyTelegramUsername;
     window.GetMyTelegramFirstName = GetMyTelegramFirstName;
     
-    // Debug test - check if functions work
-    console.log("=== JAVASCRIPT BRIDGE DEBUG ===");
-    console.log("GetTelegramParam('matchId'):", GetTelegramParam('matchId'));
-    console.log("GetMyTelegramId():", GetMyTelegramId());
-    console.log("GetMyTelegramUsername():", GetMyTelegramUsername());
-    console.log("GetMyTelegramFirstName():", GetMyTelegramFirstName());
-    console.log("===============================");
+    // Visuele debug voor Telegram WebApp (geen console toegang)
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            var jsDebugDiv = document.createElement('div');
+            jsDebugDiv.style = 'position: fixed; top: 50px; left: 10px; background: blue; color: white; padding: 10px; z-index: 9999; font-size: 14px; max-width: 350px; border-radius: 5px;';
+            
+            var debugInfo = [];
+            debugInfo.push('JAVASCRIPT DEBUG:');
+            debugInfo.push('MatchID: ' + GetTelegramParam('matchId'));
+            debugInfo.push('TelegramID: ' + GetMyTelegramId());
+            debugInfo.push('Username: ' + GetMyTelegramUsername());
+            debugInfo.push('FirstName: ' + GetMyTelegramFirstName());
+            debugInfo.push('Functions loaded: ' + (typeof window.GetTelegramParam !== 'undefined'));
+            
+            jsDebugDiv.innerHTML = debugInfo.join('<br>');
+            document.body.appendChild(jsDebugDiv);
+            
+            // Remove after 15 seconds
+            setTimeout(function() { 
+                if (jsDebugDiv.parentNode) {
+                    jsDebugDiv.remove(); 
+                }
+            }, 15000);
+        }, 2000); // Wacht 2 seconden zodat Telegram WebApp geladen is
+    });
     </script>
   </body>
 </html>
