@@ -6,6 +6,7 @@
     <title>Unity WebGL Player | Highscore Heroes</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
@@ -99,7 +100,6 @@
         // performance, uncomment the following line:
         // config.devicePixelRatio = 1;
 
-
       } else {
         // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
 
@@ -128,7 +128,7 @@
 
     </script>
     <script>
-    // Fixed debug voor Telegram WebApp
+    // Debug display voor Telegram WebApp (tijdelijk)
     window.addEventListener('load', function() {
         var debugDiv = document.createElement('div');
         debugDiv.style = 'position: fixed; top: 10px; left: 10px; background: black; color: white; padding: 10px; z-index: 9999; font-size: 12px; max-width: 300px;';
@@ -137,7 +137,7 @@
         var debugInfo = [];
         
         const urlParams = new URLSearchParams(window.location.search);
-        const tgWebAppParam = urlParams.get('tgWebAppStartParam'); // Juiste parameter naam
+        const tgWebAppParam = urlParams.get('tgWebAppStartParam');
         debugInfo.push('tgWebAppStartParam: ' + (tgWebAppParam ? 'FOUND' : 'NOT FOUND'));
         
         if (tgWebAppParam) {
@@ -160,11 +160,16 @@
         
         debugDiv.innerHTML = debugInfo.join('<br>');
         
-        setTimeout(function() { debugDiv.remove(); }, 10000);
+        // Remove after 10 seconds
+        setTimeout(function() { 
+            if (debugDiv.parentNode) {
+                debugDiv.remove(); 
+            }
+        }, 10000);
     });
     </script>
     <script>
-    // Unity bridge functions
+    // Unity bridge functions voor Telegram WebApp data
     function GetTelegramParam(paramName) {
         const urlParams = new URLSearchParams(window.location.search);
         const tgWebAppParam = urlParams.get('tgWebAppStartParam');
@@ -176,7 +181,7 @@
                 const data = JSON.parse(decoded);
                 return data.matchId || '';
             } catch (e) {
-                console.error('Decode error:', e);
+                console.error('GetTelegramParam decode error:', e);
                 return '';
             }
         }
@@ -184,25 +189,113 @@
     }
     
     function GetMyTelegramId() {
+        // Probeer eerst initDataUnsafe
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
             return window.Telegram.WebApp.initDataUnsafe.user.id.toString();
         }
+        
+        // Als dat niet werkt, haal het uit de hash
+        try {
+            const hashData = window.location.hash.substring(1); // Remove #
+            const urlParams = new URLSearchParams(hashData);
+            const userData = urlParams.get('user');
+            if (userData) {
+                const user = JSON.parse(decodeURIComponent(userData));
+                return user.id ? user.id.toString() : '';
+            }
+        } catch (e) {
+            console.error('Hash user parse error:', e);
+        }
+        
         return '';
     }
     
     function GetMyTelegramUsername() {
+        // Probeer eerst initDataUnsafe
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.username) {
             return window.Telegram.WebApp.initDataUnsafe.user.username;
         }
+        
+        // Als dat niet werkt, haal het uit de hash
+        try {
+            const hashData = window.location.hash.substring(1);
+            const urlParams = new URLSearchParams(hashData);
+            const userData = urlParams.get('user');
+            if (userData) {
+                const user = JSON.parse(decodeURIComponent(userData));
+                return user.username || '';
+            }
+        } catch (e) {
+            console.error('Hash user parse error:', e);
+        }
+        
         return '';
     }
     
     function GetMyTelegramFirstName() {
+        // Probeer eerst initDataUnsafe
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name) {
             return window.Telegram.WebApp.initDataUnsafe.user.first_name;
         }
+        
+        // Als dat niet werkt, haal het uit de hash
+        try {
+            const hashData = window.location.hash.substring(1);
+            const urlParams = new URLSearchParams(hashData);
+            const userData = urlParams.get('user');
+            if (userData) {
+                const user = JSON.parse(decodeURIComponent(userData));
+                return user.first_name || '';
+            }
+        } catch (e) {
+            console.error('Hash user parse error:', e);
+        }
+        
         return '';
     }
+    
+    // Make functions globally available for Unity DllImport
+    window.GetTelegramParam = GetTelegramParam;
+    window.GetMyTelegramId = GetMyTelegramId;
+    window.GetMyTelegramUsername = GetMyTelegramUsername;
+    window.GetMyTelegramFirstName = GetMyTelegramFirstName;
+    
+    // Visuele debug voor Telegram WebApp (geen console toegang)
+    window.addEventListener('load', function() {
+        // Wacht op Telegram WebApp initialisatie
+        if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.ready();
+        }
+        
+        setTimeout(function() {
+            var jsDebugDiv = document.createElement('div');
+            jsDebugDiv.style = 'position: fixed; top: 50px; left: 10px; background: blue; color: white; padding: 10px; z-index: 9999; font-size: 14px; max-width: 350px; border-radius: 5px;';
+            
+            var debugInfo = [];
+            debugInfo.push('JAVASCRIPT DEBUG:');
+            debugInfo.push('MatchID: ' + GetTelegramParam('matchId'));
+            debugInfo.push('TelegramID: ' + GetMyTelegramId());
+            debugInfo.push('Username: ' + GetMyTelegramUsername());
+            debugInfo.push('FirstName: ' + GetMyTelegramFirstName());
+            debugInfo.push('Functions loaded: ' + (typeof window.GetTelegramParam !== 'undefined'));
+            debugInfo.push('---');
+            debugInfo.push('Telegram object: ' + (typeof window.Telegram));
+            debugInfo.push('WebApp: ' + (window.Telegram?.WebApp ? 'EXISTS' : 'MISSING'));
+            debugInfo.push('initDataUnsafe: ' + (window.Telegram?.WebApp?.initDataUnsafe ? 'EXISTS' : 'MISSING'));
+            debugInfo.push('Hash has user: ' + window.location.hash.includes('user'));
+            debugInfo.push('Hash: ' + window.location.hash.substring(0, 50));
+            
+            jsDebugDiv.innerHTML = debugInfo.join('<br>');
+            document.body.appendChild(jsDebugDiv);
+            
+            // Remove after 15 seconds
+            setTimeout(function() { 
+                if (jsDebugDiv.parentNode) {
+                    jsDebugDiv.remove(); 
+                }
+            }, 15000);
+        }, 5000); // Verhoogd naar 5 seconden voor Telegram init
+    });
     </script>
   </body>
 </html>
