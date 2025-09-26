@@ -163,5 +163,46 @@
         setTimeout(function() { debugDiv.remove(); }, 10000);
     });
     </script>
+    <script>
+    // Unity bridge functions
+    function GetTelegramParam(paramName) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tgWebAppParam = urlParams.get('tgWebAppStartParam');
+        
+        if (tgWebAppParam && paramName === 'matchId') {
+            try {
+                const padding = '=='.substring(0, (4 - tgWebAppParam.length % 4) % 4);
+                const decoded = atob(tgWebAppParam + padding);
+                const data = JSON.parse(decoded);
+                return data.matchId || '';
+            } catch (e) {
+                console.error('Decode error:', e);
+                return '';
+            }
+        }
+        return '';
+    }
+    
+    function GetMyTelegramId() {
+        if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+            return window.Telegram.WebApp.initDataUnsafe.user.id.toString();
+        }
+        return '';
+    }
+    
+    function GetMyTelegramUsername() {
+        if (window.Telegram?.WebApp?.initDataUnsafe?.user?.username) {
+            return window.Telegram.WebApp.initDataUnsafe.user.username;
+        }
+        return '';
+    }
+    
+    function GetMyTelegramFirstName() {
+        if (window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name) {
+            return window.Telegram.WebApp.initDataUnsafe.user.first_name;
+        }
+        return '';
+    }
+    </script>
   </body>
 </html>
