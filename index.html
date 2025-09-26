@@ -196,7 +196,7 @@
         
         // Als dat niet werkt, haal het uit de hash
         try {
-            const hashData = window.location.hash.substring(1); // Remove #
+            const hashData = window.location.hash.substring(1);
             const urlParams = new URLSearchParams(hashData);
             const userData = urlParams.get('user');
             if (userData) {
@@ -211,12 +211,10 @@
     }
     
     function GetMyTelegramUsername() {
-        // Probeer eerst initDataUnsafe
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.username) {
             return window.Telegram.WebApp.initDataUnsafe.user.username;
         }
         
-        // Als dat niet werkt, haal het uit de hash
         try {
             const hashData = window.location.hash.substring(1);
             const urlParams = new URLSearchParams(hashData);
@@ -233,12 +231,10 @@
     }
     
     function GetMyTelegramFirstName() {
-        // Probeer eerst initDataUnsafe
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name) {
             return window.Telegram.WebApp.initDataUnsafe.user.first_name;
         }
         
-        // Als dat niet werkt, haal het uit de hash
         try {
             const hashData = window.location.hash.substring(1);
             const urlParams = new URLSearchParams(hashData);
