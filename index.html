@@ -33,12 +33,6 @@
       var fullscreenButton = document.querySelector("#unity-fullscreen-button");
       var warningBanner = document.querySelector("#unity-warning");
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
       function unityShowBanner(msg, type) {
         function updateBannerVisibility() {
           warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
@@ -70,39 +64,14 @@
         showBanner: unityShowBanner,
       };
 
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
-
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
-
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-
         var meta = document.createElement('meta');
         meta.name = 'viewport';
         meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
         document.getElementsByTagName('head')[0].appendChild(meta);
         container.className = "unity-mobile";
         canvas.className = "unity-mobile";
-
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
       } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-
         canvas.style.width = "960px";
         canvas.style.height = "600px";
       }
@@ -128,48 +97,7 @@
 
     </script>
     <script>
-    // Debug display voor Telegram WebApp (tijdelijk)
-    window.addEventListener('load', function() {
-        var debugDiv = document.createElement('div');
-        debugDiv.style = 'position: fixed; top: 10px; left: 10px; background: black; color: white; padding: 10px; z-index: 9999; font-size: 12px; max-width: 300px;';
-        document.body.appendChild(debugDiv);
-        
-        var debugInfo = [];
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const tgWebAppParam = urlParams.get('tgWebAppStartParam');
-        debugInfo.push('tgWebAppStartParam: ' + (tgWebAppParam ? 'FOUND' : 'NOT FOUND'));
-        
-        if (tgWebAppParam) {
-            try {
-                const padding = '=='.substring(0, (4 - tgWebAppParam.length % 4) % 4);
-                const decoded = atob(tgWebAppParam + padding);
-                const data = JSON.parse(decoded);
-                debugInfo.push('Match ID: ' + data.matchId);
-                debugInfo.push('Chat ID: ' + data.chatId);
-            } catch (e) {
-                debugInfo.push('Decode ERROR: ' + e.message);
-            }
-        }
-        
-        // Check for user data in hash
-        const hashData = window.location.hash;
-        if (hashData.includes('tgWebAppData')) {
-            debugInfo.push('User data: FOUND in hash');
-        }
-        
-        debugDiv.innerHTML = debugInfo.join('<br>');
-        
-        // Remove after 10 seconds
-        setTimeout(function() { 
-            if (debugDiv.parentNode) {
-                debugDiv.remove(); 
-            }
-        }, 10000);
-    });
-    </script>
-    <script>
-    // Unity bridge functions voor Telegram WebApp data
+    // Unity bridge functions voor Telegram WebApp
     function GetTelegramParam(paramName) {
         const urlParams = new URLSearchParams(window.location.search);
         const tgWebAppParam = urlParams.get('tgWebAppStartParam');
@@ -181,7 +109,6 @@
                 const data = JSON.parse(decoded);
                 return data.matchId || '';
             } catch (e) {
-                console.error('GetTelegramParam decode error:', e);
                 return '';
             }
         }
@@ -189,12 +116,10 @@
     }
     
     function GetMyTelegramId() {
-        // Probeer eerst initDataUnsafe
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
             return window.Telegram.WebApp.initDataUnsafe.user.id.toString();
         }
         
-        // Als dat niet werkt, haal het uit de hash
         try {
             const hashData = window.location.hash.substring(1);
             const urlParams = new URLSearchParams(hashData);
@@ -204,7 +129,7 @@
                 return user.id ? user.id.toString() : '';
             }
         } catch (e) {
-            console.error('Hash user parse error:', e);
+            // Silent fail
         }
         
         return '';
@@ -224,7 +149,7 @@
                 return user.username || '';
             }
         } catch (e) {
-            console.error('Hash user parse error:', e);
+            // Silent fail
         }
         
         return '';
@@ -244,54 +169,24 @@
                 return user.first_name || '';
             }
         } catch (e) {
-            console.error('Hash user parse error:', e);
+            // Silent fail
         }
         
         return '';
     }
     
-    // Make functions globally available for Unity DllImport
+    // Initialize Telegram WebApp
+    window.addEventListener('load', function() {
+        if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.ready();
+        }
+    });
+    
+    // Make functions globally available for Unity
     window.GetTelegramParam = GetTelegramParam;
     window.GetMyTelegramId = GetMyTelegramId;
     window.GetMyTelegramUsername = GetMyTelegramUsername;
     window.GetMyTelegramFirstName = GetMyTelegramFirstName;
-    
-    // Visuele debug voor Telegram WebApp (geen console toegang)
-    window.addEventListener('load', function() {
-        // Wacht op Telegram WebApp initialisatie
-        if (window.Telegram?.WebApp) {
-            window.Telegram.WebApp.ready();
-        }
-        
-        setTimeout(function() {
-            var jsDebugDiv = document.createElement('div');
-            jsDebugDiv.style = 'position: fixed; top: 50px; left: 10px; background: blue; color: white; padding: 10px; z-index: 9999; font-size: 14px; max-width: 350px; border-radius: 5px;';
-            
-            var debugInfo = [];
-            debugInfo.push('JAVASCRIPT DEBUG:');
-            debugInfo.push('MatchID: ' + GetTelegramParam('matchId'));
-            debugInfo.push('TelegramID: ' + GetMyTelegramId());
-            debugInfo.push('Username: ' + GetMyTelegramUsername());
-            debugInfo.push('FirstName: ' + GetMyTelegramFirstName());
-            debugInfo.push('Functions loaded: ' + (typeof window.GetTelegramParam !== 'undefined'));
-            debugInfo.push('---');
-            debugInfo.push('Telegram object: ' + (typeof window.Telegram));
-            debugInfo.push('WebApp: ' + (window.Telegram?.WebApp ? 'EXISTS' : 'MISSING'));
-            debugInfo.push('initDataUnsafe: ' + (window.Telegram?.WebApp?.initDataUnsafe ? 'EXISTS' : 'MISSING'));
-            debugInfo.push('Hash has user: ' + window.location.hash.includes('user'));
-            debugInfo.push('Hash: ' + window.location.hash.substring(0, 50));
-            
-            jsDebugDiv.innerHTML = debugInfo.join('<br>');
-            document.body.appendChild(jsDebugDiv);
-            
-            // Remove after 15 seconds
-            setTimeout(function() { 
-                if (jsDebugDiv.parentNode) {
-                    jsDebugDiv.remove(); 
-                }
-            }, 15000);
-        }, 5000); // Verhoogd naar 5 seconden voor Telegram init
-    });
     </script>
   </body>
 </html>
