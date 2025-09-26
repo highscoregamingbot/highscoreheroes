@@ -6,6 +6,7 @@
     <title>Unity WebGL Player | Highscore Heroes</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
@@ -227,6 +228,12 @@
             debugInfo.push('Username: ' + GetMyTelegramUsername());
             debugInfo.push('FirstName: ' + GetMyTelegramFirstName());
             debugInfo.push('Functions loaded: ' + (typeof window.GetTelegramParam !== 'undefined'));
+            debugInfo.push('---');
+            debugInfo.push('Telegram object: ' + (typeof window.Telegram));
+            debugInfo.push('WebApp: ' + (window.Telegram?.WebApp ? 'EXISTS' : 'MISSING'));
+            debugInfo.push('initDataUnsafe: ' + (window.Telegram?.WebApp?.initDataUnsafe ? 'EXISTS' : 'MISSING'));
+            debugInfo.push('Hash has user: ' + window.location.hash.includes('user'));
+            debugInfo.push('Hash: ' + window.location.hash.substring(0, 50));
             
             jsDebugDiv.innerHTML = debugInfo.join('<br>');
             document.body.appendChild(jsDebugDiv);
