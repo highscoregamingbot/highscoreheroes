@@ -99,7 +99,6 @@
         // performance, uncomment the following line:
         // config.devicePixelRatio = 1;
 
-
       } else {
         // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
 
@@ -128,7 +127,7 @@
 
     </script>
     <script>
-    // Fixed debug voor Telegram WebApp
+    // Debug display voor Telegram WebApp (tijdelijk)
     window.addEventListener('load', function() {
         var debugDiv = document.createElement('div');
         debugDiv.style = 'position: fixed; top: 10px; left: 10px; background: black; color: white; padding: 10px; z-index: 9999; font-size: 12px; max-width: 300px;';
@@ -137,7 +136,7 @@
         var debugInfo = [];
         
         const urlParams = new URLSearchParams(window.location.search);
-        const tgWebAppParam = urlParams.get('tgWebAppStartParam'); // Juiste parameter naam
+        const tgWebAppParam = urlParams.get('tgWebAppStartParam');
         debugInfo.push('tgWebAppStartParam: ' + (tgWebAppParam ? 'FOUND' : 'NOT FOUND'));
         
         if (tgWebAppParam) {
@@ -160,11 +159,16 @@
         
         debugDiv.innerHTML = debugInfo.join('<br>');
         
-        setTimeout(function() { debugDiv.remove(); }, 10000);
+        // Remove after 10 seconds
+        setTimeout(function() { 
+            if (debugDiv.parentNode) {
+                debugDiv.remove(); 
+            }
+        }, 10000);
     });
     </script>
     <script>
-    // Unity bridge functions
+    // Unity bridge functions voor Telegram WebApp data
     function GetTelegramParam(paramName) {
         const urlParams = new URLSearchParams(window.location.search);
         const tgWebAppParam = urlParams.get('tgWebAppStartParam');
@@ -176,7 +180,7 @@
                 const data = JSON.parse(decoded);
                 return data.matchId || '';
             } catch (e) {
-                console.error('Decode error:', e);
+                console.error('GetTelegramParam decode error:', e);
                 return '';
             }
         }
@@ -203,6 +207,20 @@
         }
         return '';
     }
+    
+    // Make functions globally available for Unity DllImport
+    window.GetTelegramParam = GetTelegramParam;
+    window.GetMyTelegramId = GetMyTelegramId;
+    window.GetMyTelegramUsername = GetMyTelegramUsername;
+    window.GetMyTelegramFirstName = GetMyTelegramFirstName;
+    
+    // Debug test - check if functions work
+    console.log("=== JAVASCRIPT BRIDGE DEBUG ===");
+    console.log("GetTelegramParam('matchId'):", GetTelegramParam('matchId'));
+    console.log("GetMyTelegramId():", GetMyTelegramId());
+    console.log("GetMyTelegramUsername():", GetMyTelegramUsername());
+    console.log("GetMyTelegramFirstName():", GetMyTelegramFirstName());
+    console.log("===============================");
     </script>
   </body>
 </html>
