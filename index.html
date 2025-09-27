@@ -100,7 +100,7 @@
     // Unity bridge functions voor Telegram WebApp
     function GetTelegramParam(paramName) {
         const urlParams = new URLSearchParams(window.location.search);
-        const tgWebAppParam = urlParams.get('tgWebAppStartParam');
+        const tgWebAppParam = urlParams.get('startapp');
         
         if (tgWebAppParam && paramName === 'matchId') {
             try {
