@@ -9,9 +9,9 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
-      /* Stijl voor de landscape-warning overlay */
+      /* DEFAULT: Overlay is ZICHTBAAR (veiligheid) */
       #orientation-overlay {
-        display: none; /* Standaard verborgen, JS bepaalt dit */
+        display: flex; 
         position: fixed;
         top: 0;
         left: 0;
@@ -28,7 +28,11 @@
         align-items: center;
       }
       
-      /* Icoontje of tekst styling */
+      /* Game container standaard VERBERGEN */
+      #unity-container {
+        display: none;
+      }
+
       .rotate-icon {
         font-size: 50px;
         margin-bottom: 20px;
@@ -67,7 +71,7 @@
       var warningBanner = document.querySelector("#unity-warning");
       var orientationOverlay = document.querySelector("#orientation-overlay");
 
-      var gameLoaded = false; // Check of Unity al gestart is
+      var gameLoaded = false;
 
       function unityShowBanner(msg, type) {
         function updateBannerVisibility() {
@@ -113,28 +117,31 @@
       }
 
       // ---------------------------------------------------------
-      // NIEUWE LOGICA: CHECK ORIENTATIE EN START UNITY
+      // ORIENTATIE LOGICA
       // ---------------------------------------------------------
 
       function checkOrientation() {
-        // Is het scherm breder dan dat het hoog is?
-        var isLandscape = window.innerWidth > window.innerHeight;
+        // Gebruik Telegram viewport data indien beschikbaar, anders window
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        
+        if (window.Telegram?.WebApp?.viewportHeight) {
+            h = window.Telegram.WebApp.viewportHeight;
+        }
+
+        var isLandscape = w > h;
 
         if (isLandscape) {
-          // Scherm is goed
           orientationOverlay.style.display = 'none';
           container.style.display = 'block';
 
-          // Als de game nog nooit gestart is, start hem nu
           if (!gameLoaded) {
             loadUnityGame();
             gameLoaded = true;
           }
-
         } else {
-          // Scherm is portrait (fout)
           orientationOverlay.style.display = 'flex';
-          container.style.display = 'none'; // Verberg de game container
+          container.style.display = 'none';
         }
       }
 
@@ -157,30 +164,35 @@
         document.body.appendChild(script);
       }
 
-      // Check bij laden en bij elke resize
+      // Event Listeners
       window.addEventListener('load', checkOrientation);
       window.addEventListener('resize', checkOrientation);
+      window.addEventListener('orientationchange', () => {
+        setTimeout(checkOrientation, 200); // Korte vertraging voor iOS
+      });
       
-      // Forceer check direct
+      // Specifiek voor Telegram WebApp resizes
+      if (window.Telegram && window.Telegram.WebApp) {
+          window.Telegram.WebApp.onEvent('viewportChanged', checkOrientation);
+          window.Telegram.WebApp.expand();
+      }
+      
+      // Directe check
       checkOrientation();
 
     </script>
     
     <script>
-    // Unity bridge functions voor Telegram WebApp (Ongewijzigd)
     function GetTelegramParam(paramName) {
         const urlParams = new URLSearchParams(window.location.search);
         const tgWebAppParam = urlParams.get('startapp');
-        
         if (tgWebAppParam && paramName === 'matchId') {
             try {
                 const padding = '=='.substring(0, (4 - tgWebAppParam.length % 4) % 4);
                 const decoded = atob(tgWebAppParam + padding);
                 const data = JSON.parse(decoded);
                 return data.matchId || '';
-            } catch (e) {
-                return '';
-            }
+            } catch (e) { return ''; }
         }
         return '';
     }
@@ -189,15 +201,6 @@
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
             return window.Telegram.WebApp.initDataUnsafe.user.id.toString();
         }
-        try {
-            const hashData = window.location.hash.substring(1);
-            const urlParams = new URLSearchParams(hashData);
-            const userData = urlParams.get('user');
-            if (userData) {
-                const user = JSON.parse(decodeURIComponent(userData));
-                return user.id ? user.id.toString() : '';
-            }
-        } catch (e) {}
         return '';
     }
     
@@ -205,15 +208,6 @@
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.username) {
             return window.Telegram.WebApp.initDataUnsafe.user.username;
         }
-        try {
-            const hashData = window.location.hash.substring(1);
-            const urlParams = new URLSearchParams(hashData);
-            const userData = urlParams.get('user');
-            if (userData) {
-                const user = JSON.parse(decodeURIComponent(userData));
-                return user.username || '';
-            }
-        } catch (e) {}
         return '';
     }
     
@@ -221,22 +215,13 @@
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name) {
             return window.Telegram.WebApp.initDataUnsafe.user.first_name;
         }
-        try {
-            const hashData = window.location.hash.substring(1);
-            const urlParams = new URLSearchParams(hashData);
-            const userData = urlParams.get('user');
-            if (userData) {
-                const user = JSON.parse(decodeURIComponent(userData));
-                return user.first_name || '';
-            }
-        } catch (e) {}
         return '';
     }
     
     window.addEventListener('load', function() {
         if (window.Telegram?.WebApp) {
             window.Telegram.WebApp.ready();
-            window.Telegram.WebApp.expand(); // Zorgt voor fullscreen in Telegram
+            window.Telegram.WebApp.expand();
         }
     });
     
