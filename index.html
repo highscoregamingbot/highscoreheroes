@@ -217,18 +217,26 @@
         }
         return '';
     }
-    
+
+    function GetMyTelegramLastName() {
+        if (window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name) {
+            return window.Telegram.WebApp.initDataUnsafe.user.last_name;
+        }
+        return '';
+    }
+
     window.addEventListener('load', function() {
         if (window.Telegram?.WebApp) {
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
         }
     });
-    
+
     window.GetTelegramParam = GetTelegramParam;
     window.GetMyTelegramId = GetMyTelegramId;
     window.GetMyTelegramUsername = GetMyTelegramUsername;
     window.GetMyTelegramFirstName = GetMyTelegramFirstName;
+    window.GetMyTelegramLastName = GetMyTelegramLastName;
     </script>
   </body>
 </html>
