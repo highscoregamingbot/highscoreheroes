@@ -7,8 +7,41 @@
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+      /* Stijl voor de landscape-warning overlay */
+      #orientation-overlay {
+        display: none; /* Standaard verborgen, JS bepaalt dit */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #000000;
+        z-index: 9999;
+        color: white;
+        font-family: sans-serif;
+        font-size: 24px;
+        text-align: center;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      /* Icoontje of tekst styling */
+      .rotate-icon {
+        font-size: 50px;
+        margin-bottom: 20px;
+      }
+    </style>
   </head>
   <body>
+  
+    <div id="orientation-overlay">
+      <div class="rotate-icon">↻</div>
+      <div>Please rotate your device<br>to landscape mode to play.</div>
+    </div>
+
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
@@ -24,14 +57,17 @@
         <div id="unity-build-title">Highscore Heroes</div>
       </div>
     </div>
+    
     <script>
-
       var container = document.querySelector("#unity-container");
       var canvas = document.querySelector("#unity-canvas");
       var loadingBar = document.querySelector("#unity-loading-bar");
       var progressBarFull = document.querySelector("#unity-progress-bar-full");
       var fullscreenButton = document.querySelector("#unity-fullscreen-button");
       var warningBanner = document.querySelector("#unity-warning");
+      var orientationOverlay = document.querySelector("#orientation-overlay");
+
+      var gameLoaded = false; // Check of Unity al gestart is
 
       function unityShowBanner(msg, type) {
         function updateBannerVisibility() {
@@ -76,28 +112,62 @@
         canvas.style.height = "600px";
       }
 
-      loadingBar.style.display = "block";
+      // ---------------------------------------------------------
+      // NIEUWE LOGICA: CHECK ORIENTATIE EN START UNITY
+      // ---------------------------------------------------------
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-              }).then((unityInstance) => {
-                loadingBar.style.display = "none";
-                fullscreenButton.onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
-              }).catch((message) => {
-                alert(message);
-              });
+      function checkOrientation() {
+        // Is het scherm breder dan dat het hoog is?
+        var isLandscape = window.innerWidth > window.innerHeight;
+
+        if (isLandscape) {
+          // Scherm is goed
+          orientationOverlay.style.display = 'none';
+          container.style.display = 'block';
+
+          // Als de game nog nooit gestart is, start hem nu
+          if (!gameLoaded) {
+            loadUnityGame();
+            gameLoaded = true;
+          }
+
+        } else {
+          // Scherm is portrait (fout)
+          orientationOverlay.style.display = 'flex';
+          container.style.display = 'none'; // Verberg de game container
+        }
+      }
+
+      function loadUnityGame() {
+        loadingBar.style.display = "block";
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+          createUnityInstance(canvas, config, (progress) => {
+            progressBarFull.style.width = 100 * progress + "%";
+          }).then((unityInstance) => {
+            loadingBar.style.display = "none";
+            fullscreenButton.onclick = () => {
+              unityInstance.SetFullscreen(1);
             };
+          }).catch((message) => {
+            alert(message);
+          });
+        };
+        document.body.appendChild(script);
+      }
 
-      document.body.appendChild(script);
+      // Check bij laden en bij elke resize
+      window.addEventListener('load', checkOrientation);
+      window.addEventListener('resize', checkOrientation);
+      
+      // Forceer check direct
+      checkOrientation();
 
     </script>
+    
     <script>
-    // Unity bridge functions voor Telegram WebApp
+    // Unity bridge functions voor Telegram WebApp (Ongewijzigd)
     function GetTelegramParam(paramName) {
         const urlParams = new URLSearchParams(window.location.search);
         const tgWebAppParam = urlParams.get('startapp');
@@ -119,7 +189,6 @@
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
             return window.Telegram.WebApp.initDataUnsafe.user.id.toString();
         }
-        
         try {
             const hashData = window.location.hash.substring(1);
             const urlParams = new URLSearchParams(hashData);
@@ -128,10 +197,7 @@
                 const user = JSON.parse(decodeURIComponent(userData));
                 return user.id ? user.id.toString() : '';
             }
-        } catch (e) {
-            // Silent fail
-        }
-        
+        } catch (e) {}
         return '';
     }
     
@@ -139,7 +205,6 @@
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.username) {
             return window.Telegram.WebApp.initDataUnsafe.user.username;
         }
-        
         try {
             const hashData = window.location.hash.substring(1);
             const urlParams = new URLSearchParams(hashData);
@@ -148,10 +213,7 @@
                 const user = JSON.parse(decodeURIComponent(userData));
                 return user.username || '';
             }
-        } catch (e) {
-            // Silent fail
-        }
-        
+        } catch (e) {}
         return '';
     }
     
@@ -159,7 +221,6 @@
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name) {
             return window.Telegram.WebApp.initDataUnsafe.user.first_name;
         }
-        
         try {
             const hashData = window.location.hash.substring(1);
             const urlParams = new URLSearchParams(hashData);
@@ -168,21 +229,17 @@
                 const user = JSON.parse(decodeURIComponent(userData));
                 return user.first_name || '';
             }
-        } catch (e) {
-            // Silent fail
-        }
-        
+        } catch (e) {}
         return '';
     }
     
-    // Initialize Telegram WebApp
     window.addEventListener('load', function() {
         if (window.Telegram?.WebApp) {
             window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand(); // Zorgt voor fullscreen in Telegram
         }
     });
     
-    // Make functions globally available for Unity
     window.GetTelegramParam = GetTelegramParam;
     window.GetMyTelegramId = GetMyTelegramId;
     window.GetMyTelegramUsername = GetMyTelegramUsername;
